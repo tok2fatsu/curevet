@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cure Mobile Veterinary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+   
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;	
+	}
+
+        body {
+	    background-image: url('ASSETS/paw_background.png');
+            background-size: cover;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 4rem 0;
+            /*background-color: #f1f1f1;*/
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #1e88e5;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+	.header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .book-appointment {
+            background-color: #1e88e5;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .book-appointment:hover {
+            background-color: #1565c0;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .services {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .service-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .survice-card:hover {
+            transform: translateY(-5px);
+        }
+
+	.material-symbols-outlined {
+  	    font-variation-settings:
+  	    'FILL' 0,
+  	    'wght' 400,
+  	    'GRAD' 0,
+  	    'opsz' 24;
+	    font-size: 2.5rem;
+            color: #1e88e5;
+	    margin-bottom: 1rem;
+	}
+
+	.menu {
+	    margin-top: -3rem;
+	}
+
+	#internal-link {
+	    margin-top: -3rem;
+	    text-decoration: none;
+	    color: black;
+	}
+
+	#internal-link:hover {
+	    color: #a3a3a3;
+	}
+
+        .contact-section {
+            text-align: center;
+            padding: 4rem 0;
+            background-color: #fff;
+        }
+
+        .contact-icons {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        .contact-icon {
+            font-size: 2.5rem;
+            color: #1e88e5;
+            transition: color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .contact-icon:hover {
+            color: #1565c0;
+        }
+
+        @media (max-width: 768px) {
+            .services {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-icons {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Cure Veterinary</h1>
+            <p class="tagline">Compassionate Care for Your Pets</p>
+	    <button class="book-appointment" onclick="openModal()">Book Appointment</button>
+	</div>
+    </header>
+	<div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <h2>Book Appointment</h2>
+            <form id="bookingForm" action="backend/api.php" method="POST">
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone:</label>
+                    <input type="tel" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Pet Type:</label>
+                    <select name="pet_type" required>
+                        <option value="dog">Dog</option>
+                        <option value="cat">Cat</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Service Needed:</label>
+                    <select name="service" required>
+                        <option value="treatment">Treatment</option>
+                        <option value="vaccination">Vaccination</option>
+                        <option value="surgery">Emergency Surgery</option>
+                        <option value="training">Dog Training</option>
+                        <option value="grooming">Pet Grooming</option>
+                        <option value="permits">Import/Export Permits</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Preferred Date:</label>
+                    <input type="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Message:</label>
+                    <textarea name="message" rows="4"></textarea>
+                </div>
+                <button type="submit" class="book-appointment">Submit Booking</button>
+            </form>
+        </div>
+    </div>
+
+
+    <main class="container">
+        <section class="services">
+            <div class="service-card">
+                <span class="material-symbols-outlined">cardiology</span>
+                <h2>Treatment</h2>
+                <p>Comprehensive medical care for pets</p>
+            </div>
+            <div class="service-card">
+                <span class="material-symbols-outlined">syringe</span>
+                <h2>Vaccination</h2>
+                <p>Preventative care for a healthy life</p>
+            </div>
+            <div class="service-card">
+                <span class="material-symbols-outlined">surgical</span>
+                <h2>Emergency Surgery</h2>
+                <p>Immediate, life-saving procedures</p>
+            </div>
+            <div class="service-card">
+                <span class="material-symbols-outlined">pets</span>
+                <h2>Dog Training</h2>
+                <p>Professional obedience & behavior training</p>
+            </div>
+            <div class="service-card">
+                <span class="material-symbols-outlined">content_cut</span>
+                <h2>Pet Grooming</h2>
+                <p>Hygiene and styling for your furry friends</p>
+            </div>
+            <div class="service-card">
+                <span class="material-symbols-outlined">language</span>
+                <h2>Import/Export Permits</h2>
+                <p>Hassle-free documentation assistance</p>
+            </div>
+        </section>
+    </main>
+
+    <section class="contact-section">
+	<div class="menu">
+	<a id="internal-link" href="/about.html">About Us</a>
+	</div>
+        <div class="container">
+            <h2>Contact Us</h2>
+            <p>Reach out directly via your preferred method</p>
+            <div class="contact-icons">
+                <a href="tel:+1234567890" class="contact-icon">
+                    <span class="material-symbols-outlined">call</span>
+                </a>
+                <a href="mailto:contact@curevet.com" class="contact-icon">
+                    <span class="material-symbols-outlined">mail</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+	<script>
+        // Modal handling
+        function openModal() {
+            document.getElementById('bookingModal').style.display = 'block';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('bookingModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Form handling
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const response = await fetch(e.target.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('Appointment booked successfully!');
+                document.getElementById('bookingModal').style.display = 'none';
+            } else {
+                alert('Error booking appointment. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>
