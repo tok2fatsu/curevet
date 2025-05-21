@@ -306,22 +306,9 @@
         }
 
         // Form handling
-        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const response = await fetch(e.target.action, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                alert('Appointment booked successfully!');
-                document.getElementById('bookingModal').style.display = 'none';
-            } else {
-                alert('Error booking appointment. Please try again.');
-            }
-        });
-    </script>
+        window.onbeforeunload = () => {
+        window.scrollTo(0, 0);
+    }
+</script>
 </body>
 </html>
