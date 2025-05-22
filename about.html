@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cure Mobile Veterinary</title>
+    <title>CureVet | About</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-   
-    <style>
-        * {
+<style>
+* {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -68,7 +67,7 @@
             background-color: #1565c0;
         }
 
-        /* Modal styles */
+	/* Modal styles */
         .modal {
             display: none;
             position: fixed;
@@ -100,38 +99,7 @@
             border-radius: 4px;
             margin-top: 0.3rem;
         }
-
-        .services {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin: 4rem 0;
-        }
-
-        .service-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .survice-card:hover {
-            transform: translateY(-5px);
-        }
-
-	.material-symbols-outlined {
-  	    font-variation-settings:
-  	    'FILL' 0,
-  	    'wght' 400,
-  	    'GRAD' 0,
-  	    'opsz' 24;
-	    font-size: 2.5rem;
-            color: #1e88e5;
-	    margin-bottom: 1rem;
-	}
-
+	
 	.menu {
 	    margin-top: -3rem;
 	}
@@ -180,20 +148,21 @@
                 gap: 1.5rem;
             }
         }
-    </style>
+
+</style>
 </head>
 <body>
-    <header>
+<header>
         <div class="container">
             <h1>Cure Veterinary</h1>
             <p class="tagline">Compassionate Care for Your Pets</p>
 	    <button class="book-appointment" onclick="openModal()">Book Appointment</button>
 	</div>
     </header>
-	<div id="bookingModal" class="modal">
+<div id="bookingModal" class="modal">
         <div class="modal-content">
             <h2>Book Appointment</h2>
-            <form id="bookingForm" action="https://formspree.io/f/mjkwdyal" method="POST">
+            <form id="bookingForm" action="https://formspree.io/f/xzzrwwyw" method="POST">
                 <div class="form-group">
                     <label>Name:</label>
                     <input type="text" name="name" required>
@@ -237,46 +206,25 @@
             </form>
         </div>
     </div>
-
-
-    <main class="container">
-        <section class="services">
-            <div class="service-card">
-                <span class="material-symbols-outlined">cardiology</span>
-                <h2>Treatment</h2>
-                <p>Comprehensive medical care for pets</p>
-            </div>
-            <div class="service-card">
-                <span class="material-symbols-outlined">syringe</span>
-                <h2>Vaccination</h2>
-                <p>Preventative care for a healthy life</p>
-            </div>
-            <div class="service-card">
-                <span class="material-symbols-outlined">surgical</span>
-                <h2>Emergency Surgery</h2>
-                <p>Immediate, life-saving procedures</p>
-            </div>
-            <div class="service-card">
-                <span class="material-symbols-outlined">pets</span>
-                <h2>Dog Training</h2>
-                <p>Professional obedience & behavior training</p>
-            </div>
-            <div class="service-card">
-                <span class="material-symbols-outlined">content_cut</span>
-                <h2>Pet Grooming</h2>
-                <p>Hygiene and styling for your furry friends</p>
-            </div>
-            <div class="service-card">
-                <span class="material-symbols-outlined">language</span>
-                <h2>Import/Export Permits</h2>
-                <p>Hassle-free documentation assistance</p>
-            </div>
-        </section>
-    </main>
-
+    <section class="descriptions">
+	<div class="script-1">
+	    <h2>Compassionate Care for Your Furry Friends</h2>
+	    <p>Cure Veterinary is dedicated to providing exceptional veterinary services tailored for your pets' needs. Whether it's routine vaccinations, emergency surgeries, or specialized grooming, our expert team is here to ensure your beloved companions receive the highest standard of care.</p>
+	</div>
+	<div class="script-2">
+            <h2>Your Pet's Health, Our Priority</h2>
+            <p>Curing your pet's ailments goes beyond just treatment; it’s about delivering comprehensive care that encompasses everything from routine vaccinations to emergency surgeries. Our dedicated team is committed to ensuring that your furry friends receive personalized care tailored to their specific needs.</p>
+	    <button class="book-appointment" onclick="openModal()">Book Appointment</button>
+	    <p>Whether you’re looking to enhance your pet’s behavior with professional training, seeking expert grooming services, or need assistance with import and export permits, we stand ready to support you. Trust us to be your partner in your pet's health and well-being.</p>
+	</div>
+	<div class="script-3">
+	    <h2>Dedicated to Your Pet’s Well-Being</h2>
+	    <p>Comprehensive services ensure your pet receives the care they deserve, from treatments and vaccinations to emergency interventions. Your trust in our expertise is paramount as we work to foster a happy, healthy life for your beloved companions.</p>
+	</div>
+    </section>
     <section class="contact-section">
 	<div class="menu">
-	<a id="internal-link" href="about.html">About Us</a>
+	<a id="internal-link" href="index.html">Home</a>
 	</div>
         <div class="container">
             <h2>Contact Us</h2>
@@ -291,8 +239,7 @@
             </div>
         </div>
     </section>
-
-	<script>
+<script>
         // Modal handling
         function openModal() {
             document.getElementById('bookingModal').style.display = 'block';
