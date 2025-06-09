@@ -2,12 +2,12 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Montserrat', sans-serif;
 }
 
 body {
     background-image: url('ASSETS/paw_background.png');
-    background-size: cover;
+    background-size: repeat;
     background-color: #f9f9f9;
     color: #333;
     line-height: 1.6;
@@ -21,19 +21,24 @@ body {
 
 header {
     text-align: center;
-    padding: 4rem 0;
-    /*background-color: #f1f1f1;*/
+    padding: 4rem 4rem;
+}
+
+header a img {
+    max-width: 5em;
 }
 
 h1 {
     font-size: 2.5rem;
     margin-bottom: 1rem;
-    color: #1e88e5;
+    color: rgb(6, 83, 94);
 }
 
 .tagline {
     font-size: 1.2rem;
     color: #666;
+    display: block;
+    justify-self: center;
 }
 
 .header-content {
@@ -44,7 +49,7 @@ h1 {
 }
 
 .book-appointment {
-    background-color: #1e88e5;
+    background-color: rgb(6, 83, 94);
     color: white;
     padding: 0.8rem 2rem;
     border-radius: 25px;
@@ -56,12 +61,14 @@ h1 {
 }
 
 .book-appointment:hover {
-    background-color: #1565c0;
+    background-color: rgb(6, 83, 94);
 }
 
 
 /* Modal styles */
 
+
+/*
 .modal {
     display: none;
     position: fixed;
@@ -95,6 +102,7 @@ textarea {
     border-radius: 4px;
     margin-top: 0.3rem;
 }
+*/
 
 .services {
     display: grid;
@@ -112,14 +120,49 @@ textarea {
     transition: transform 0.3s ease;
 }
 
-.survice-card:hover {
+.service-card:hover {
     transform: translateY(-5px);
+}
+
+.service-card:before {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(-45deg, #02faa1 0%, #1472ff 100%);
+    transform: translate3d(0px, -2px, 0) scale(0.95);
+    filter: blur(20px);
+    opacity: var(0.7);
+    transition: opacity 0.3s;
+    border-radius: inherit;
+}
+
+
+/* 
+* Prevents issues when the parent creates a 
+* stacking context. (For example, using the transform
+* property )
+*/
+
+.service-card::after {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: inherit;
+    border-radius: inherit;
 }
 
 .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     font-size: 2.5rem;
-    color: #1e88e5;
+    color: rgb(6, 83, 94);
     margin-bottom: 1rem;
 }
 
@@ -152,13 +195,13 @@ textarea {
 
 .contact-icon {
     font-size: 2.5rem;
-    color: #1e88e5;
+    color: rgb(6, 83, 94);
     transition: color 0.3s ease;
     text-decoration: none;
 }
 
 .contact-icon:hover {
-    color: #1565c0;
+    color: rgb(6, 83, 94);
 }
 
 @media (max-width: 768px) {
