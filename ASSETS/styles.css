@@ -1,0 +1,486 @@
+:root {
+      --bg: #0f172a;
+      --glass-bg: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --accent: #48bb78;
+      --muted: #94a3b8;
+      --text: #e6eef8;
+      --radius: 16px;
+      --elevation: 0 10px 30px rgba(2, 6, 23, 0.6);
+      --font-montserrat: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue';
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-montserrat);
+      font-weight: 400;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 700;
+    }
+
+    h1 { font-size: 2.5rem; }
+    h2 { font-size: 2rem; }
+    h3 { font-size: 1.5rem; }
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Glass Card */
+    .glass-card {
+      backdrop-filter: blur(10px) saturate(120%);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      box-shadow: var(--elevation);
+      padding: 1.5rem;
+      color: var(--text);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(2, 6, 23, 0.7);
+    }
+
+    /* Navigation */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 1rem 0;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 80vh;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('https://placehold.co/1920x1080/1e293b/48bb78?text=Veterinary+Care') no-repeat center center;
+      background-size: cover;
+      opacity: 0.2;
+      z-index: -1;
+    }
+
+    .hero-content {
+      max-width: 600px;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: var(--muted);
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.8rem 1.8rem;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background-color: #3da066;
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      margin-left: 1rem;
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(72, 187, 120, 0.1);
+    }
+
+    /* Services Section */
+    .services {
+      padding: 5rem 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-header h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .service-card .icon {
+      font-size: 2.5rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .service-card h3 {
+      margin-bottom: 1rem;
+    }
+
+    /* Contact Form */
+    .contact {
+      padding: 5rem 0;
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    .contact-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    @media (min-width: 768px) {
+      .contact-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .contact-icon {
+      font-size: 1.5rem;
+      color: var(--accent);
+      min-width: 40px;
+    }
+
+    form {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input, textarea, select {
+      padding: 0.8rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-montserrat);
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    
+    .date-time-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+    .submit-btn {
+      background-color: var(--accent);
+      color: white;
+      padding: 0.8rem 1.8rem;
+      border: none;
+      border-radius: 50px;
+      font-weight: 500;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      background-color: #3da066;
+      transform: translateY(-2px);
+    }
+
+    /* Footer */
+    footer {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--glass-border);
+      padding: 3rem 0 1.5rem;
+    }
+
+    .footer-content {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .footer-content {
+        grid-template-columns: 2fr 1fr 1fr;
+      }
+    }
+
+    .footer-logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 1rem;
+    }
+
+    .footer-logo span {
+      color: var(--accent);
+    }
+
+    .footer-about p {
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .social-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
+      color: var(--text);
+      transition: all 0.3s ease;
+    }
+
+    .social-links a:hover {
+      background: var(--accent);
+      color: white;
+      transform: translateY(-3px);
+    }
+
+    .footer-links h4 {
+      color: white;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+
+    .footer-links ul {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    .copyright {
+      text-align: center;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      h2 {
+        font-size: 1.8rem;
+      }
+
+      .mobile-toggle {
+        display: block;
+      }
+
+      .nav-links {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem 0;
+        transform: translateY(-100%);
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 99;
+      }
+
+      .nav-links.active {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      
+      .date-time-group {
+                grid-template-columns: 1fr;
+            }
+    }
+
+    /* Icons using pseudo-elements as fallback */
+    [data-icon="phone"]::before {
+      content: "📞";
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    [data-icon="email"]::before {
+      content: "✉️";
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    [data-icon="location"]::before {
+      content: "📍";
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    [data-icon="clock"]::before {
+      content: "⏰";
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    /* Service icons */
+    .service-icon-treatment::before { content: "🩺"; }
+    .service-icon-vaccination::before { content: "💉"; }
+    .service-icon-surgery::before { content: "🔪"; }
+    .service-icon-training::before { content: "🎓"; }
+    .service-icon-grooming::before { content: "✂️"; }
+    .service-icon-permits::before { content: "📋"; }
+
+    .service-card [class^="service-icon-"] {
+      font-size: 2.5rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
