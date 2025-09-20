@@ -1,6 +1,6 @@
 <?php
 // php/db.php - PDO connection factory
-$config = require __DIR__ . '/../config.php'; // adjust path if config placed elsewhere
+$config = require __DIR__ . '../config.php'; // adjust path if config placed elsewhere
 
 try {
     $dsn = "mysql:host={$config['DB_HOST']};dbname={$config['DB_NAME']};charset=utf8mb4";

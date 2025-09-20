@@ -1,9 +1,9 @@
 <?php
 // php/contacts.php - receives booking requests; uses Redis rate-limiting and PHPMailer SMTP
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . '/db.php';
-require __DIR__ . '/redis.php';
-$config = require __DIR__ . '/../config.php';
+require __DIR__ . 'db.php';
+require __DIR__ . 'redis.php';
+$config = require __DIR__ . '../config.php';
 
 // Require PHPMailer via composer vendor/autoload
 if (!file_exists(__DIR__ . '/vendor/autoload.php')) {

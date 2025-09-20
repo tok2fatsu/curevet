@@ -609,7 +609,7 @@
           </div>
         </div>
         <div class="glass-card">
-          <form id="contactForm" action="/backend/api/contacts.php" method="POST">
+          <form id="contactForm" action="backend/api/contacts.php" method="POST">
         <div class="form-group">
           <label for="name">Full Name</label>
           <input type="text" id="name" name="name" required />
@@ -743,7 +743,7 @@
 
     timeSelect.innerHTML = '<option>Loading...</option>';
 
-    fetch(`/backend/api/available_slots.php?date=${encodeURIComponent(date)}`)
+    fetch(`backend/api/available_slots.php?date=${encodeURIComponent(date)}`)
       .then(res => res.json())
       .then(data => {
         timeSelect.innerHTML = '';
