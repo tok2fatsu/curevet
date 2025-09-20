@@ -6,34 +6,35 @@ try {
     $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // --- 1. Handle available slots request ---
-    if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'availableSlots') {
+    // ✅ Handle available slots request
+    if (isset($_GET['action']) && $_GET['action'] === 'availableSlots') {
         $date = $_GET['date'] ?? null;
         if (!$date) {
-            echo json_encode(['success' => false, 'errors' => ['Missing date']]);
+            echo json_encode(['success' => false, 'slots' => [], 'error' => 'No date provided']);
             exit;
         }
 
-        // Get booked times for that date
+        // Example slots (adjust as needed)
+        $allSlots = [
+            "08:30 AM", "09:30 AM", "10:30 AM", "11:30 AM",
+            "1:30 PM", "2:30 PM", "3:30 PM",
+            "04:30 PM", "5:30 PM", "6:30 PM",
+            "07:30 PM"
+        ];
+
+        // Get already booked slots from DB
         $stmt = $pdo->prepare("SELECT booking_time FROM contact_form WHERE booking_date = ?");
         $stmt->execute([$date]);
-        $bookedTimes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $booked = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-        // Generate slots (9:00–17:00, 1 hour apart)
-        $slots = [];
-        $start = new DateTime("09:00");
-        $end = new DateTime("17:00");
-        while ($start < $end) {
-            $time = $start->format("H:i");
-            if (!in_array($time, $bookedTimes)) {
-                $slots[] = $time;
-            }
-            $start->modify("+1 hour");
-        }
+        // Filter out booked slots
+        $available = array_values(array_diff($allSlots, $booked));
 
-        echo json_encode(['success' => true, 'slots' => $slots]);
+        echo json_encode(['success' => true, 'slots' => $available]);
         exit;
     }
+
+
 
     // --- 2. Handle booking submission ---
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
