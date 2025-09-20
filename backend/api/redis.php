@@ -1,6 +1,6 @@
 <?php
 // php/redis.php - Predis client (composer: predis/predis)
-$config = require __DIR__ . '../config.php';
+$config = require __DIR__ . '/../config.php';
 $client = null;
 
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
