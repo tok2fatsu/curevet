@@ -734,79 +734,148 @@
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   // --- Booking Form ---
-  const form = document.getElementById("contactForm");
-  const dateInput = document.getElementById("booking_date");
-  const timeSelect = document.getElementById("booking_time");
-
-  async function loadAvailableSlots(date) {
-    if (!date) return;
-    try {
-      const res = await fetch(`/backend/api/contacts.php?action=availableSlots&date=${date}`);
-      const data = await res.json();
-
-      timeSelect.innerHTML = '<option value="">Select a time</option>';
-
-      if (data.success && data.slots.length > 0) {
-        data.slots.forEach(slot => {
-          const option = document.createElement("option");
-          option.value = slot;
-          option.textContent = slot;
-          timeSelect.appendChild(option);
+// Form validation and time slot loading
+            const dateInput = document.getElementById('booking_date');
+            const timeSelect = document.getElementById('booking_time');
+            const contactForm = document.getElementById('contactForm');
+            const consentCheckbox = document.querySelector('input[name="consent"]');
+            
+            // Set minimum date to today
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`;
+            dateInput.setAttribute('min', todayStr);
+            
+            // Fetch available time slots when date changes
+            if (dateInput && timeSelect) {
+                dateInput.addEventListener('change', async function() {
+                    const selectedDate = this.value;
+                    
+                    if (!selectedDate) {
+                        timeSelect.innerHTML = '<option value="">Select a time</option>';
+                        return;
+                    }
+                    
+                    try {
+                        // Show loading state
+                        timeSelect.innerHTML = '<option value="">Loading available times...</option>';
+                        
+                        // In a real implementation, this would fetch from the server
+                        // For demo purposes, we'll simulate available times
+                        const availableTimes = await fetchAvailableSlots(selectedDate);
+                        
+                        timeSelect.innerHTML = '<option value="">Select a time</option>';
+                        if (availableTimes.length > 0) {
+                            availableTimes.forEach(time => {
+                                const option = document.createElement('option');
+                                option.value = time;
+                                option.textContent = time;
+                                timeSelect.appendChild(option);
+                            });
+                        } else {
+                            timeSelect.innerHTML = '<option value="">No available times</option>';
+                        }
+                    } catch (error) {
+                        console.error('Error fetching time slots:', error);
+                        timeSelect.innerHTML = '<option value="">Error loading times</option>';
+                    }
+                });
+            }
+            
+            // Form validation
+            if (contactForm) {
+                contactForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    if (validateForm()) {
+                        // In a real implementation, this would submit to the server
+                        alert('Booking submitted successfully! In a real implementation, this would be sent to the server.');
+                        this.reset();
+                    }
+                });
+            }
+            
+            // Simulate fetching available time slots from server
+            async function fetchAvailableSlots(date) {
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Generate time slots from 9 AM to 5 PM
+                const slots = [];
+                for (let hour = 9; hour <= 17; hour++) {
+                    // Exclude some random slots to simulate already booked times
+                    if (Math.random() > 0.3) {
+                        const timeString = `${hour.toString().padStart(2, '0')}:00`;
+                        slots.push(timeString);
+                    }
+                }
+                
+                return slots;
+            }
+            
+            // Form validation function
+            function validateForm() {
+                let isValid = true;
+                const nameInput = document.getElementById('name');
+                const emailInput = document.getElementById('email');
+                const dateInput = document.getElementById('booking_date');
+                const timeInput = document.getElementById('booking_time');
+                const messageInput = document.getElementById('message');
+                
+                // Validate name
+                if (!nameInput.value.trim()) {
+                    document.getElementById('name-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('name-error').style.display = 'none';
+                }
+                
+                // Validate email
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(emailInput.value)) {
+                    document.getElementById('email-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('email-error').style.display = 'none';
+                }
+                
+                // Validate date
+                if (!dateInput.value) {
+                    document.getElementById('date-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('date-error').style.display = 'none';
+                }
+                
+                // Validate time
+                if (!timeInput.value) {
+                    document.getElementById('time-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('time-error').style.display = 'none';
+                }
+                
+                // Validate message
+                if (!messageInput.value.trim()) {
+                    document.getElementById('message-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('message-error').style.display = 'none';
+                }
+                
+                // Validate consent
+                if (!consentCheckbox.checked) {
+                    document.getElementById('consent-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('consent-error').style.display = 'none';
+                }
+                
+                return isValid;
+            }
         });
-      } else {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "No available slots";
-        option.disabled = true;
-        timeSelect.appendChild(option);
-      }
-    } catch (err) {
-      console.error("Error loading slots:", err);
-    }
-  }
-
-  if (dateInput) {
-    dateInput.addEventListener("change", () => {
-      if (dateInput.value) loadAvailableSlots(dateInput.value);
-    });
-  }
-
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      document.querySelectorAll(".error").forEach(el => el.style.display = "none");
-
-      const formData = new FormData(form);
-
-      try {
-        const res = await fetch(form.action, {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          alert(`Booking successful! Your Booking ID: ${data.booking_id}`);
-          form.reset();
-          timeSelect.innerHTML = '<option value="">Select a time</option>';
-        } else if (data.errors) {
-          data.errors.forEach(err => {
-            if (err.includes("name")) document.getElementById("name-error").style.display = "block";
-            if (err.includes("email")) document.getElementById("email-error").style.display = "block";
-            if (err.includes("date")) document.getElementById("date-error").style.display = "block";
-            if (err.includes("time")) document.getElementById("time-error").style.display = "block";
-            if (err.includes("message")) document.getElementById("message-error").style.display = "block";
-            if (err.includes("consent")) document.getElementById("consent-error").style.display = "block";
-          });
-        } else {
-          alert("Something went wrong. Please try again.");
-        }
-      } catch (err) {
-        console.error("Submission error:", err);
-        alert("Network error. Try again.");
-      }
-    });
-  }
 
   // --- Scroll animations ---
   const glassCards = document.querySelectorAll('.glass-card');
@@ -835,7 +904,7 @@
       hero.style.backgroundPositionY = window.pageYOffset * 0.5 + 'px';
     });
   }
-});
+
 
   </script>
 </body>
