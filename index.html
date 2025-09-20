@@ -696,47 +696,48 @@
   </footer>
 
   <script>
-    // Mobile Navigation Toggle
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navLinks = document.getElementById('navLinks');
-
+   document.addEventListener("DOMContentLoaded", () => {
+  // --- Mobile Navigation Toggle ---
+  const mobileToggle = document.getElementById('mobileToggle');
+  const navLinks = document.getElementById('navLinks');
+  if (mobileToggle && navLinks) {
     mobileToggle.addEventListener('click', () => {
       navLinks.classList.toggle('active');
     });
 
-    // Close mobile menu when clicking a link
     document.querySelectorAll('.nav-links a').forEach(link => {
       link.addEventListener('click', () => {
         navLinks.classList.remove('active');
       });
     });
+  }
 
-    // Smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
-        
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-          window.scrollTo({
-            top: targetElement.offsetTop - 80,
-            behavior: 'smooth'
-          });
-        }
-      });
+  // --- Smooth scrolling ---
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        window.scrollTo({
+          top: targetElement.offsetTop - 80,
+          behavior: 'smooth'
+        });
+      }
     });
+  });
 
-    // Update year in footer
-    document.getElementById('year').textContent = new Date().getFullYear();
+  // --- Update year in footer ---
+  const yearEl = document.getElementById('year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-   document.addEventListener("DOMContentLoaded", () => {
+  // --- Booking Form ---
   const form = document.getElementById("contactForm");
   const dateInput = document.getElementById("booking_date");
   const timeSelect = document.getElementById("booking_time");
 
-  // Function to fetch available time slots
   async function loadAvailableSlots(date) {
     if (!date) return;
     try {
@@ -764,36 +765,31 @@
     }
   }
 
-  // Watch date input
-  dateInput.addEventListener("change", () => {
-    const selectedDate = dateInput.value;
-    if (selectedDate) {
-      loadAvailableSlots(selectedDate);
-    }
-  });
+  if (dateInput) {
+    dateInput.addEventListener("change", () => {
+      if (dateInput.value) loadAvailableSlots(dateInput.value);
+    });
+  }
 
-  // Form submit handler
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      document.querySelectorAll(".error").forEach(el => el.style.display = "none");
 
-    // Clear previous errors
-    document.querySelectorAll(".error").forEach(el => el.style.display = "none");
+      const formData = new FormData(form);
 
-    const formData = new FormData(form);
+      try {
+        const res = await fetch(form.action, {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
 
-    try {
-      const res = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        alert(`Booking successful! Your Booking ID: ${data.booking_id}`);
-        form.reset();
-        timeSelect.innerHTML = '<option value="">Select a time</option>';
-      } else {
-        if (data.errors) {
+        if (data.success) {
+          alert(`Booking successful! Your Booking ID: ${data.booking_id}`);
+          form.reset();
+          timeSelect.innerHTML = '<option value="">Select a time</option>';
+        } else if (data.errors) {
           data.errors.forEach(err => {
             if (err.includes("name")) document.getElementById("name-error").style.display = "block";
             if (err.includes("email")) document.getElementById("email-error").style.display = "block";
@@ -805,46 +801,42 @@
         } else {
           alert("Something went wrong. Please try again.");
         }
+      } catch (err) {
+        console.error("Submission error:", err);
+        alert("Network error. Try again.");
       }
-    } catch (err) {
-      console.error("Submission error:", err);
-      alert("Network error. Try again.");
-    }
+    });
+  }
+
+  // --- Scroll animations ---
+  const glassCards = document.querySelectorAll('.glass-card');
+  const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = 1;
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, observerOptions);
+
+  glassCards.forEach(card => {
+    card.style.opacity = 0;
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(card);
   });
+
+  // --- Parallax hero ---
+  const hero = document.querySelector('.hero');
+  if (hero) {
+    window.addEventListener('scroll', () => {
+      hero.style.backgroundPositionY = window.pageYOffset * 0.5 + 'px';
+    });
+  }
 });
 
-    // Simple animation on scroll
-    const glassCards = document.querySelectorAll('.glass-card');
-    
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.style.opacity = 1;
-          entry.target.style.transform = 'translateY(0)';
-        }
-      });
-    }, observerOptions);
-
-    glassCards.forEach(card => {
-      card.style.opacity = 0;
-      card.style.transform = 'translateY(20px)';
-      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-      observer.observe(card);
-    });
-
-    // Parallax effect for hero background
-    window.addEventListener('scroll', () => {
-      const scrolled = window.pageYOffset;
-      const hero = document.querySelector('.hero');
-      if (hero) {
-        hero.style.backgroundPositionY = scrolled * 0.5 + 'px';
-      }
-    });
   </script>
 </body>
 </html>
