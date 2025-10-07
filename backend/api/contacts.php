@@ -40,6 +40,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respond(false, 'Invalid request method.', 405);
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_GET['action'] === 'availableSlots') {
+    $date = $_GET['date'] ?? null;
+    if (!$date) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Missing date']);
+        exit;
+    }
+
+    // TODO: Pull available slots from your DB or static schedule
+    $slots = ['09:00 AM', '10:30 AM', '12:00 PM', '02:00 PM', '03:30 PM'];
+
+    header('Content-Type: application/json');
+    echo json_encode(['slots' => $slots]);
+    exit;
+}
+
+
 // -----------------------------------------------------------------------------
 // 5. Sanitize and validate inputs
 // -----------------------------------------------------------------------------
