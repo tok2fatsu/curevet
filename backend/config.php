@@ -6,3 +6,5 @@ $db_name = 'curevedd_bookings';
 $db_user = 'curevedd_bookings';
 $db_pass = 'Qwerty@5936';
 
+// Email
+define("ADMIN_EMAIL", "bookings@curevet.org");
