@@ -36,19 +36,19 @@ function respond($success, $message, $code = 200) {
 // -----------------------------------------------------------------------------
 // 4. Validate request method
 // -----------------------------------------------------------------------------
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_GET['action'] === 'availableSlots') {
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'availableSlots') {
+    header('Content-Type: application/json');
+
     $date = $_GET['date'] ?? null;
     if (!$date) {
-        http_response_code(400);
         echo json_encode(['error' => 'Missing date']);
         exit;
     }
 
-    // TODO: Pull available slots from your DB or static schedule
+    // Simulated available slots — static array for now
     $slots = ['09:00 AM', '10:30 AM', '12:00 PM', '02:00 PM', '03:30 PM'];
 
-    header('Content-Type: application/json');
-    echo json_encode(['slots' => $slots]);
+    echo json_encode(['slots' => $slots], JSON_PRETTY_PRINT);
     exit;
 }
 
