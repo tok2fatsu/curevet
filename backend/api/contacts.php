@@ -81,28 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $booking_id = $pdo->lastInsertId();
 
-        // Notify clinic
-        $clinic_to = "bookings@curevet.org";
-        $clinic_subject = "New Booking - CureVet";
-        $clinic_body = "New booking received:\n\n"
-            . "Booking ID: $booking_id\n"
-            . "Name: {$_POST['name']}\n"
-            . "Email: {$_POST['email']}\n"
-            . "Phone: {$_POST['phone']}\n"
-            . "Service: {$_POST['service']}\n"
-            . "Date: {$_POST['booking_date']} {$_POST['booking_time']}\n"
-            . "Message: {$_POST['message']}";
-        @mail($clinic_to, $clinic_subject, $clinic_body, "From: bookings@curevet.org");
-
-        // Send receipt to user
-        $user_to = $_POST['email'];
-        $user_subject = "CureVet Appointment Confirmation";
-        $user_body = "Dear {$_POST['name']},\n\nThank you for booking with CureVet.\n\n"
-            . "Booking ID: $booking_id\n"
-            . "Service: {$_POST['service']}\n"
-            . "Date: {$_POST['booking_date']} at {$_POST['booking_time']}\n\n"
-            . "We look forward to seeing you.\n\n– The CureVet Team";
-        @mail($user_to, $user_subject, $user_body, "From: bookings@curevet.org");
 
         echo json_encode(['success' => true, 'booking_id' => $booking_id]);
     } catch (PDOException $e) {
@@ -113,6 +91,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     exit;
+}
+
+// ------------------ EMAIL NOTIFICATIONS ------------------
+
+// ---- ADMIN NOTIFICATION ----
+$subject = "New Appointment Booking: $name";
+$body = "A new booking has been submitted:\n\n"
+      . "Name: $name\n"
+      . "Email: $email\n"
+      . "Phone: $phone\n"
+      . "Service: $service\n"
+      . "Date: $date\n"
+      . "Time: $time\n\n"
+      . "Message:\n$message\n";
+$headers = "From: CureVet <" . ADMIN_EMAIL . ">\r\n"
+          . "Reply-To: $email\r\n"
+          . "Content-Type: text/plain; charset=UTF-8\r\n";
+
+$mailSent = mail(ADMIN_EMAIL, $subject, $body, $headers);
+
+// ---- AUTO-REPLY TO USER ----
+if ($mailSent && $email) {
+    $replySubject = "Thank you for booking with CureVet";
+    $replyMessage = "Dear $name,\n\n"
+                  . "We’ve received your booking for $service on $date at $time.\n\n"
+                  . "Your booking ID: #$booking_id\n\n"
+                  . "If you have any questions, simply reply to this email.\n\n"
+                  . "— The CureVet Team\n"
+                  . ADMIN_EMAIL;
+    $replyHeaders = "From: CureVet <" . ADMIN_EMAIL . ">\r\n"
+                  . "Reply-To: " . ADMIN_EMAIL . "\r\n"
+                  . "Content-Type: text/plain; charset=UTF-8\r\n";
+
+    mail($email, $replySubject, $replyMessage, $replyHeaders);
 }
 
 // ----------------------------------------------------------------------------
