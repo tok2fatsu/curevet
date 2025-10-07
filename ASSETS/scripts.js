@@ -1,213 +1,194 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // --- Mobile Navigation Toggle ---
-  const mobileToggle = document.getElementById("mobileToggle");
-  const navLinks = document.getElementById("navLinks");
-
+  // --- MOBILE NAVIGATION TOGGLE ---
+  const mobileToggle = document.getElementById('mobileToggle');
+  const navLinks = document.getElementById('navLinks');
   if (mobileToggle && navLinks) {
-    mobileToggle.addEventListener("click", () => {
-      navLinks.classList.toggle("active");
+    mobileToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
     });
 
-    document.querySelectorAll(".nav-links a").forEach(link => {
-      link.addEventListener("click", () => {
-        navLinks.classList.remove("active");
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('active');
       });
     });
   }
 
-  // --- Smooth scrolling ---
+  // --- SMOOTH SCROLLING ---
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener("click", function (e) {
+    anchor.addEventListener('click', function (e) {
       e.preventDefault();
-      const targetId = this.getAttribute("href");
-      if (targetId === "#") return;
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
 
       const targetElement = document.querySelector(targetId);
       if (targetElement) {
         window.scrollTo({
           top: targetElement.offsetTop - 80,
-          behavior: "smooth"
+          behavior: 'smooth'
         });
       }
     });
   });
 
-  // --- Update year in footer ---
-  const yearEl = document.getElementById("year");
+  // --- UPDATE YEAR IN FOOTER ---
+  const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  // --- Booking Form ---
+  // --- BOOKING FORM LOGIC ---
   const form = document.getElementById("contactForm");
   const dateInput = document.getElementById("booking_date");
   const timeSelect = document.getElementById("booking_time");
-  const alertBox = document.getElementById('formAlert');
-  
-  // Inline feedback element
-  const feedbackBox = document.createElement("div");
-  feedbackBox.id = "form-feedback";
-  feedbackBox.style.marginTop = "1em";
-  feedbackBox.style.padding = "10px";
-  feedbackBox.style.borderRadius = "8px";
-  feedbackBox.style.display = "none";
-  feedbackBox.style.fontWeight = "500";
-  if (form) form.appendChild(feedbackBox);
 
-  // Feedback helper
-  function showFeedback(message, success = true) {
-    feedbackBox.textContent = message;
-    feedbackBox.style.display = "block";
-    feedbackBox.style.backgroundColor = success ? "#e6ffed" : "#ffe6e6";
-    feedbackBox.style.color = success ? "#066b1a" : "#a10000";
-    feedbackBox.style.border = success ? "1px solid #5ad36f" : "1px solid #ff6666";
+  const alertBox = document.getElementById("formAlert");
 
-    // Auto-fade after 5 seconds
-    setTimeout(() => {
-      feedbackBox.style.display = "none";
-    }, 5000);
-  }
-
-  function showAlert(message, type = 'error') {
-    alertBox.style.display = 'block';
+  function showAlert(message, type = "error") {
+    if (!alertBox) return alert(message);
     alertBox.textContent = message;
-    alertBox.className = 'alert ' + type;
+    alertBox.className = type === "success" ? "alert success" : "alert error";
+    alertBox.style.display = "block";
   }
 
   function clearAlert() {
-    alertBox.style.display = 'none';
-    alertBox.textContent = '';
+    if (alertBox) alertBox.style.display = "none";
   }
 
-  // Load available time slots for a given date
-  function loadAvailableSlots(date) {
-    if (!date) return;
-
-    slotSelect.innerHTML = '<option>Loading...</option>';
-
-    fetch(`/backend/api/contacts.php?action=availableSlots&date=${encodeURIComponent(date)}`)
-      .then(response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();
-      })
-      .then(data => {
-        slotSelect.innerHTML = '';
-        if (data.slots && data.slots.length > 0) {
-          data.slots.forEach(slot => {
-            const option = document.createElement('option');
-            option.value = slot;
-            option.textContent = slot;
-            slotSelect.appendChild(option);
-          });
-        } else {
-          const option = document.createElement('option');
-          option.textContent = 'No available slots';
-          option.disabled = true;
-          slotSelect.appendChild(option);
-        }
-      })
-      .catch(error => {
-        console.error('Error loading slots:', error);
-        slotSelect.innerHTML = '<option>Error loading slots</option>';
-      });
-  }
-
-  // Trigger time slot load when date changes
-  dateInput.addEventListener('change', (e) => {
+  // Fetch available time slots
+  async function loadAvailableSlots(date) {
     clearAlert();
-    loadAvailableSlots(e.target.value);
-  });
+    if (!date) {
+      showAlert("Please select a date first.");
+      return;
+    }
 
-  // Handle form submission
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearAlert();
+    if (!timeSelect) {
+      console.error("Missing #booking_time element");
+      return;
+    }
 
-    const formData = new FormData(form);
+    timeSelect.innerHTML = '<option value="">Loading...</option>';
 
     try {
-      const response = await fetch('/backend/api/contacts.php', {
-        method: 'POST',
-        body: formData
+      const response = await fetch(`/backend/api/contacts.php?action=availableSlots&date=${encodeURIComponent(date)}`, {
+        method: "GET",
+        headers: { "Accept": "application/json" }
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        showAlert('Your booking request was sent successfully! Please check your email for confirmation.', 'success');
-        form.reset();
-        slotSelect.innerHTML = '<option>Select a date first</option>';
-      } else {
-        showAlert(data.message || 'Submission failed. Please try again.');
+      if (!response.ok) {
+        showAlert(`Server error (${response.status}) while fetching slots.`);
+        timeSelect.innerHTML = '<option value="">Error loading slots</option>';
+        return;
       }
-    } catch (error) {
-      console.error('Submission error:', error);
-      showAlert('Network error. Please try again.');
-    }
-  });
 
-// --- Button Spinner Helpers ---
-  function startLoading(btn) {
-    if (!btn) return;
-    btn.disabled = true;
-    btn.dataset.originalText = btn.innerHTML;
-    btn.innerHTML = `
-      <span class="spinner" style="
-        display:inline-block;
-        width:1em;
-        height:1em;
-        border:2px solid rgba(255,255,255,0.4);
-        border-top:2px solid white;
-        border-radius:50%;
-        animation:spin 0.8s linear infinite;
-        margin-right:8px;
-        vertical-align:middle;
-      "></span>Submitting...
-    `;
-  }
+      const data = await response.json();
+      console.log("Slots response:", data);
 
-  function stopLoading(btn) {
-    if (!btn) return;
-    btn.disabled = false;
-    if (btn.dataset.originalText) {
-      btn.innerHTML = btn.dataset.originalText;
+      timeSelect.innerHTML = '<option value="">Select a time</option>';
+
+      if (data.success && Array.isArray(data.slots) && data.slots.length > 0) {
+        data.slots.forEach(slot => {
+          const option = document.createElement("option");
+          option.value = slot;
+          option.textContent = slot;
+          timeSelect.appendChild(option);
+        });
+      } else {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No available slots";
+        option.disabled = true;
+        timeSelect.appendChild(option);
+      }
+    } catch (err) {
+      console.error("Error loading slots:", err);
+      showAlert("Network error while loading available slots.");
+      timeSelect.innerHTML = '<option value="">Network error</option>';
     }
   }
 
-  // --- Add spinner animation keyframes ---
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-  `;
-  document.head.appendChild(style);
+  // Watch date input
+  if (dateInput) {
+    dateInput.addEventListener("change", () => {
+      const selectedDate = dateInput.value;
+      clearAlert();
+      if (selectedDate) loadAvailableSlots(selectedDate);
+      else timeSelect.innerHTML = '<option value="">Select a time</option>';
+    });
+  }
 
-  // --- Scroll animations ---
-  const glassCards = document.querySelectorAll(".glass-card");
-  const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
+  // Handle form submission
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearAlert();
+
+      document.querySelectorAll(".error").forEach(el => (el.style.display = "none"));
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          showAlert("Server error. Please try again later.");
+          return;
+        }
+
+        const data = await response.json();
+        console.log("Form submit response:", data);
+
+        if (data.success) {
+          showAlert(`Booking successful! Your Booking ID: ${data.booking_id}`, "success");
+          form.reset();
+          if (timeSelect) timeSelect.innerHTML = '<option value="">Select a time</option>';
+        } else {
+          if (data.errors) {
+            data.errors.forEach(err => {
+              if (err.includes("name")) document.getElementById("name-error").style.display = "block";
+              if (err.includes("email")) document.getElementById("email-error").style.display = "block";
+              if (err.includes("date")) document.getElementById("date-error").style.display = "block";
+              if (err.includes("time")) document.getElementById("time-error").style.display = "block";
+              if (err.includes("message")) document.getElementById("message-error").style.display = "block";
+              if (err.includes("consent")) document.getElementById("consent-error").style.display = "block";
+            });
+          }
+          showAlert("Please correct the highlighted errors and try again.");
+        }
+      } catch (err) {
+        console.error("Submission error:", err);
+        showAlert("Network error. Try again.");
+      }
+    });
+  }
+
+  // --- SCROLL ANIMATIONS ---
+  const glassCards = document.querySelectorAll('.glass-card');
+  const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.style.opacity = 1;
-        entry.target.style.transform = "translateY(0)";
+        entry.target.style.transform = 'translateY(0)';
       }
     });
   }, observerOptions);
 
   glassCards.forEach(card => {
     card.style.opacity = 0;
-    card.style.transform = "translateY(20px)";
-    card.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
     observer.observe(card);
   });
 
-  // --- Parallax hero ---
-  const hero = document.querySelector(".hero");
+  // --- PARALLAX HERO ---
+  const hero = document.querySelector('.hero');
   if (hero) {
-    window.addEventListener("scroll", () => {
-      hero.style.backgroundPositionY = window.pageYOffset * 0.5 + "px";
+    window.addEventListener('scroll', () => {
+      hero.style.backgroundPositionY = window.pageYOffset * 0.5 + 'px';
     });
   }
 });
-

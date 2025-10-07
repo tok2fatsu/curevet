@@ -484,3 +484,22 @@
       color: var(--accent);
       margin-bottom: 1rem;
     }
+
+.alert {
+  margin-top: 10px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  text-align: center;
+}
+.alert.error {
+  background-color: #ffe5e5;
+  color: #b30000;
+  border: 1px solid #ff9999;
+}
+.alert.success {
+  background-color: #e7ffe7;
+  color: #006600;
+  border: 1px solid #66cc66;
+}
+
