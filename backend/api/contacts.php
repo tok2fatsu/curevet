@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
 // Handle POST request for booking submission
 // ----------------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $required = ['name', 'email', 'service', 'booking_date', 'booking_time', 'message', 'consent'];
+    $required = ['name', 'email', 'service', 'booking_date', 'booking_time', 'message'];
     $errors = [];
 
     foreach ($required as $field) {
