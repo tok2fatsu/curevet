@@ -1,207 +1,125 @@
 <?php
-/**
- * contacts.php — secure contact form handler (production-safe)
- * Uses PHP mail() instead of SMTP
- */
-
 header('Content-Type: application/json');
+require_once __DIR__ . '/../config.php';
 
-// -----------------------------------------------------------------------------
-// 1. Load configuration and dependencies
-// -----------------------------------------------------------------------------
-$config = require __DIR__ . '/../config.php';
-$redis  = require __DIR__ . '/../includes/redis.php';
-
-// -----------------------------------------------------------------------------
-// 2. Security headers
-// -----------------------------------------------------------------------------
-header("X-Content-Type-Options: nosniff");
-header("X-Frame-Options: SAMEORIGIN");
-header("X-XSS-Protection: 1; mode=block");
-header("Referrer-Policy: no-referrer");
-header("Permissions-Policy: interest-cohort=()");
-
-// -----------------------------------------------------------------------------
-// 3. Utility: send JSON responses
-// -----------------------------------------------------------------------------
-function respond($success, $message, $code = 200) {
-    http_response_code($code);
-    echo json_encode([
-        'success' => $success,
-        'message' => $message,
-    ]);
+try {
+    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'error' => 'DB connection failed']);
     exit;
 }
 
-// -----------------------------------------------------------------------------
-// 4. Validate request method
-// -----------------------------------------------------------------------------
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'availableSlots') {
-    header('Content-Type: application/json');
-
+// ----------------------------------------------------------------------------
+// Handle GET request for available slots
+// ----------------------------------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'availableSlots') {
     $date = $_GET['date'] ?? null;
     if (!$date) {
-        echo json_encode(['error' => 'Missing date']);
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Missing date']);
         exit;
     }
 
-    // Simulated available slots — static array for now
-    $slots = ['09:00 AM', '10:30 AM', '12:00 PM', '02:00 PM', '03:30 PM'];
+    // Generate 1-hour slots (09:00–17:00)
+    $all_slots = [];
+    $start = strtotime('09:00');
+    $end = strtotime('17:00');
+    while ($start <= $end) {
+        $all_slots[] = date('H:i', $start);
+        $start = strtotime('+1 hour', $start);
+    }
 
-    echo json_encode(['slots' => $slots], JSON_PRETTY_PRINT);
+    // Fetch booked slots for this date
+    $stmt = $pdo->prepare("SELECT booking_time FROM contact_form WHERE booking_date = ?");
+    $stmt->execute([$date]);
+    $booked = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    // Filter out booked slots
+    $available_slots = array_values(array_diff($all_slots, $booked));
+
+    echo json_encode([
+        'success' => true,
+        'slots' => $available_slots
+    ]);
     exit;
 }
 
+// ----------------------------------------------------------------------------
+// Handle POST request for booking submission
+// ----------------------------------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $required = ['name', 'email', 'service', 'booking_date', 'booking_time', 'message', 'consent'];
+    $errors = [];
 
-// Validate request method for form submissions (POST only beyond this point)
+    foreach ($required as $field) {
+        if (empty($_POST[$field])) $errors[] = "Missing: $field";
+    }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    respond(false, 'Invalid request method.', 405);
-}
+    if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Invalid email address";
+    }
 
-// -----------------------------------------------------------------------------
-// 5. Sanitize and validate inputs
-// -----------------------------------------------------------------------------
-$name    = trim($_POST['name'] ?? '');
-$email   = trim($_POST['email'] ?? '');
-$phone   = trim($_POST['phone'] ?? '');
-$service = trim($_POST['service'] ?? '');
-$date    = trim($_POST['booking_date'] ?? '');
-$time    = trim($_POST['booking_time'] ?? '');
-$message = trim($_POST['message'] ?? '');
+    if ($errors) {
+        echo json_encode(['success' => false, 'errors' => $errors]);
+        exit;
+    }
 
-if ($name === '' || $email === '' || $service === '' || $date === '' || $time === '') {
-    respond(false, 'Please fill all required fields.', 400);
-}
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    respond(false, 'Invalid email format.', 400);
-}
-if ($phone !== '' && !preg_match('/^[0-9+\-\s]{6,20}$/', $phone)) {
-    respond(false, 'Invalid phone number format.', 400);
-}
-
-// -----------------------------------------------------------------------------
-// 6. Rate limiting via Redis (if available)
-// -----------------------------------------------------------------------------
-$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-if ($redis) {
     try {
-        $key = "contact_limit:" . sha1($ip);
-        $count = $redis->incr($key);
-        if ($count === 1) $redis->expire($key, 60);
-        if ($count > 5) respond(false, 'Too many submissions. Please wait a minute.', 429);
-    } catch (Exception $e) {
-        error_log('Redis rate-limit failed: ' . $e->getMessage());
+        $stmt = $pdo->prepare("INSERT INTO contact_form 
+            (name, email, phone, service, booking_date, booking_time, message, created_at) 
+            VALUES (?,?,?,?,?,?,?,NOW())");
+        $stmt->execute([
+            $_POST['name'],
+            $_POST['email'],
+            $_POST['phone'] ?? null,
+            $_POST['service'],
+            $_POST['booking_date'],
+            $_POST['booking_time'],
+            $_POST['message']
+        ]);
+
+        $booking_id = $pdo->lastInsertId();
+
+        // Notify clinic
+        $clinic_to = "bookings@curevet.org";
+        $clinic_subject = "New Booking - CureVet";
+        $clinic_body = "New booking received:\n\n"
+            . "Booking ID: $booking_id\n"
+            . "Name: {$_POST['name']}\n"
+            . "Email: {$_POST['email']}\n"
+            . "Phone: {$_POST['phone']}\n"
+            . "Service: {$_POST['service']}\n"
+            . "Date: {$_POST['booking_date']} {$_POST['booking_time']}\n"
+            . "Message: {$_POST['message']}";
+        @mail($clinic_to, $clinic_subject, $clinic_body, "From: bookings@curevet.org");
+
+        // Send receipt to user
+        $user_to = $_POST['email'];
+        $user_subject = "CureVet Appointment Confirmation";
+        $user_body = "Dear {$_POST['name']},\n\nThank you for booking with CureVet.\n\n"
+            . "Booking ID: $booking_id\n"
+            . "Service: {$_POST['service']}\n"
+            . "Date: {$_POST['booking_date']} at {$_POST['booking_time']}\n\n"
+            . "We look forward to seeing you.\n\n– The CureVet Team";
+        @mail($user_to, $user_subject, $user_body, "From: bookings@curevet.org");
+
+        echo json_encode(['success' => true, 'booking_id' => $booking_id]);
+    } catch (PDOException $e) {
+        if ($e->getCode() === '23000') {
+            echo json_encode(['success' => false, 'errors' => ['This time slot is already booked.']]);
+        } else {
+            echo json_encode(['success' => false, 'errors' => [$e->getMessage()]]);
+        }
     }
+    exit;
 }
 
-// -----------------------------------------------------------------------------
-// 7. Save message to MySQL
-// -----------------------------------------------------------------------------
-try {
-    $dsn = "mysql:host={$config['db_host']};port={$config['db_port']};dbname={$config['db_name']};charset=utf8mb4";
-    $pdo = new PDO($dsn, $config['db_user'], $config['db_pass'], [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    ]);
-
-// --- Check for existing booking on same date/time/service ---
-
-    $checkStmt = $pdo->prepare("
-        SELECT id FROM contact_form
-        WHERE service = :service AND booking_date = :booking_date AND booking_time = :booking_time
-        LIMIT 1
-    ");
-    $checkStmt->execute([
-        ':service' => $service,
-        ':booking_date' => $date,
-        ':booking_time' => $time
-    ]);
-    if ($checkStmt->fetch()) {
-        respond(false, "That time slot for $service on $date at $time is already booked. Please choose another.", 409);
-    }
-
-// --- Insert new booking ---
-
-    $stmt = $pdo->prepare("
-        INSERT INTO contact_form (name, email, phone, service, booking_date, booking_time, message, created_at)
-        VALUES (:name, :email, :phone, :service, :booking_date, :booking_time, :message, NOW())
-    ");
-    $stmt->execute([
-        ':name'         => $name,
-        ':email'        => $email,
-        ':phone'        => $phone,
-        ':service'      => $service,
-        ':booking_date' => $date,
-        ':booking_time' => $time,
-        ':message'      => $message,
-    ]);
-    $booking_id = $pdo->lastInsertId();
-
-} catch (PDOException $e) {
-    error_log('Database error: ' . $e->getMessage());
-    respond(false, 'Could not save your booking. Please try again later.', 500);
-}
-
-// -----------------------------------------------------------------------------
-// 8. Send emails via PHP mail()
-// -----------------------------------------------------------------------------
-$admin_to = "bookings@curevet.org";
-$admin_subject = "New Booking Request - CureVet";
-$admin_body = "New appointment booked:\n\n".
-              "Booking ID: $booking_id\n".
-              "Name: $name\n".
-              "Email: $email\n".
-              "Phone: $phone\n".
-              "Service: $service\n".
-              "Date: $date $time\n".
-              "Message: $message\n\n".
-              "-- CureVet System";
-
-$admin_headers = "From: bookings@curevet.org\r\n";
-$admin_headers .= "Reply-To: $email\r\n";
-$admin_headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-
-if (!@mail($admin_to, $admin_subject, $admin_body, $admin_headers)) {
-    error_log("Admin email failed for booking #$booking_id ($email)");
-}
-
-// --- Receipt to user ---
-$user_subject = "Your Booking Confirmation - CureVet";
-$user_body = "Dear $name,\n\n".
-             "Thank you for booking with CureVet. Here are your details:\n\n".
-             "Booking ID: $booking_id\n".
-             "Service: $service\n".
-             "Date: $date at $time\n\n".
-             "We look forward to seeing you!\n\n".
-             "— CureVet Team";
-
-$user_headers = "From: bookings@curevet.org\r\n";
-$user_headers .= "Reply-To: bookings@curevet.org\r\n";
-$user_headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-
-if (!@mail($email, $user_subject, $user_body, $user_headers)) {
-    error_log("User confirmation email failed for booking #$booking_id ($email)");
-}
-
-// -----------------------------------------------------------------------------
-// 9. Optional cache/log
-// -----------------------------------------------------------------------------
-if ($redis) {
-    try {
-        $redis->rpush('contact_submissions', json_encode([
-            'ip'       => $ip,
-            'name'     => $name,
-            'email'    => $email,
-            'service'  => $service,
-            'datetime' => date('Y-m-d H:i:s'),
-        ]));
-    } catch (Exception $e) {
-        error_log('Redis logging failed: ' . $e->getMessage());
-    }
-}
-
-// -----------------------------------------------------------------------------
-// 10. Response
-// -----------------------------------------------------------------------------
-respond(true, 'Your booking has been successfully submitted!');
+// ----------------------------------------------------------------------------
+// Invalid request fallback
+// ----------------------------------------------------------------------------
+http_response_code(405);
+echo json_encode(['success' => false, 'error' => 'Method Not Allowed']);
+exit;
+?>
 
