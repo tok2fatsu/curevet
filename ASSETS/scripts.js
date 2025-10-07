@@ -65,60 +65,72 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 5000);
   }
 
-  // --- Load available time slots ---
-  async function loadAvailableSlots(date) {
-    timeSelect.innerHTML = '<option value="">Loading...</option>';
-    try {
-      const res = await fetch('/backend/api/contacts.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            action: 'availableSlots',
-            date: selectedDate
-          })
-      });
+  // Load available time slots for a given date
+  function loadAvailableSlots(date) {
+    if (!date) return;
 
-      const data = await res.json();
+    slotSelect.innerHTML = '<option>Loading...</option>';
 
-      timeSelect.innerHTML = '<option value="">Select a time</option>';
-
-      if (data.success && Array.isArray(data.slots)) {
-        if (data.slots.length === 0) {
-          const opt = document.createElement("option");
-          opt.textContent = "No available slots";
-          opt.disabled = true;
-          timeSelect.appendChild(opt);
-        } else {
+    fetch(`/backend/api/contacts.php?action=availableSlots&date=${encodeURIComponent(date)}`)
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        slotSelect.innerHTML = '';
+        if (data.slots && data.slots.length > 0) {
           data.slots.forEach(slot => {
-            const option = document.createElement("option");
+            const option = document.createElement('option');
             option.value = slot;
             option.textContent = slot;
-            timeSelect.appendChild(option);
+            slotSelect.appendChild(option);
           });
+        } else {
+          const option = document.createElement('option');
+          option.textContent = 'No available slots';
+          option.disabled = true;
+          slotSelect.appendChild(option);
         }
-      } else {
-        const opt = document.createElement("option");
-        opt.textContent = "Error loading slots";
-        opt.disabled = true;
-        timeSelect.appendChild(opt);
-      }
-    } catch (err) {
-      console.error("Error loading slots:", err);
-      showFeedback("Could not load available times. Please try again later.", false);
-    }
+      })
+      .catch(error => {
+        console.error('Error loading slots:', error);
+        slotSelect.innerHTML = '<option>Error loading slots</option>';
+      });
   }
 
-  // --- Watch date input ---
-  if (dateInput) {
-    dateInput.addEventListener("change", () => {
-      const selectedDate = dateInput.value;
-      if (selectedDate) {
-        loadAvailableSlots(selectedDate);
+  // Trigger time slot load when date changes
+  dateInput.addEventListener('change', (e) => {
+    clearAlert();
+    loadAvailableSlots(e.target.value);
+  });
+
+  // Handle form submission
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearAlert();
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch('/backend/api/contacts.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showAlert('Your booking request was sent successfully! Please check your email for confirmation.', 'success');
+        form.reset();
+        slotSelect.innerHTML = '<option>Select a date first</option>';
       } else {
-        timeSelect.innerHTML = '<option value="">Select a time</option>';
+        showAlert(data.message || 'Submission failed. Please try again.');
       }
-    });
-  }
+    } catch (error) {
+      console.error('Submission error:', error);
+      showAlert('Network error. Please try again.');
+    }
+  });
 
 // --- Button Spinner Helpers ---
   function startLoading(btn) {
@@ -157,32 +169,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   `;
   document.head.appendChild(style);
-
-  // --- Handle form submission ---
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      feedbackBox.style.display = "none";
-
-      const formData = new FormData(form);
-
-      try {
-        const res = await fetch(form.action, { method: "POST", body: formData });
-        const data = await res.json();
-
-        if (data.success) {
-          showFeedback(data.message || "Booking successful! Confirmation email sent.", true);
-          form.reset();
-          timeSelect.innerHTML = '<option value="">Select a time</option>';
-        } else {
-          showFeedback(data.message || "An error occurred. Please try again.", false);
-        }
-      } catch (err) {
-        console.error("Submission error:", err);
-        showFeedback("Network error. Please check your connection and try again.", false);
-      }
-    });
-  }
 
   // --- Scroll animations ---
   const glassCards = document.querySelectorAll(".glass-card");
