@@ -36,10 +36,6 @@ function respond($success, $message, $code = 200) {
 // -----------------------------------------------------------------------------
 // 4. Validate request method
 // -----------------------------------------------------------------------------
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    respond(false, 'Invalid request method.', 405);
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_GET['action'] === 'availableSlots') {
     $date = $_GET['date'] ?? null;
     if (!$date) {
@@ -49,13 +45,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_GET['action'] === 'availableSlots'
     }
 
     // TODO: Pull available slots from your DB or static schedule
-    $slots = ['09:00 AM', '10:30 AM', '12:00 PM', '02:00 PM', '03:30 PM'];
+    //$slots = ['09:00 AM', '10:30 AM', '12:00 PM', '02:00 PM', '03:30 PM'];
 
     header('Content-Type: application/json');
     echo json_encode(['slots' => $slots]);
     exit;
 }
 
+
+// Validate request method for form submissions (POST only beyond this point)
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    respond(false, 'Invalid request method.', 405);
+}
 
 // -----------------------------------------------------------------------------
 // 5. Sanitize and validate inputs
