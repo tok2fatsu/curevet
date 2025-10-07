@@ -37,26 +37,45 @@
 
   // --- Booking Form ---
 document.addEventListener("DOMContentLoaded", () => {
-  const contactForm = document.getElementById("contactForm");
+  const form = document.getElementById("contactForm");
   const dateInput = document.getElementById("booking_date");
   const timeSelect = document.getElementById("booking_time");
-  const consentCheckbox = document.querySelector('input[name="consent"]');
 
-  // --- Ensure min date is today ---
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  dateInput.setAttribute('min', `${yyyy}-${mm}-${dd}`);
-
-  // --- Fetch slots from backend ---
+  // Function to fetch available time slots
   async function loadAvailableSlots(date) {
+    if (!date) {
+      console.warn("No date provided for slot fetch");
+      return;
+    }
+
     try {
-      const res = await fetch(`/backend/api/contacts.php?action=availableSlots&date=${date}`);
-      const data = await res.json();
+      console.log("Fetching slots for date:", date);
+
+      const res = await fetch(`/backend/api/contacts.php?action=availableSlots&date=${encodeURIComponent(date)}`, {
+        method: "GET",
+        headers: { "Accept": "application/json" }
+      });
+
+      if (!res.ok) {
+        console.error("HTTP error:", res.status, res.statusText);
+        timeSelect.innerHTML = '<option value="">Error loading slots</option>';
+        return;
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.error("Failed to parse JSON:", parseErr);
+        timeSelect.innerHTML = '<option value="">Invalid response from server</option>';
+        return;
+      }
+
+      console.log("Slots response:", data);
+
       timeSelect.innerHTML = '<option value="">Select a time</option>';
 
-      if (data.success && data.slots.length > 0) {
+      if (data.success && Array.isArray(data.slots) && data.slots.length > 0) {
         data.slots.forEach(slot => {
           const option = document.createElement("option");
           option.value = slot;
@@ -72,70 +91,63 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (err) {
       console.error("Error loading slots:", err);
+      timeSelect.innerHTML = '<option value="">Network or server error</option>';
     }
   }
 
-  dateInput.addEventListener("change", () => {
-    if (dateInput.value) {
-      loadAvailableSlots(dateInput.value);
-    }
-  });
-
-  // --- Validation ---
-  function validateForm() {
-    let isValid = true;
-
-    const fields = [
-      { id: "name", regex: /.+/ },
-      { id: "email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-      { id: "booking_date", regex: /.+/ },
-      { id: "booking_time", regex: /.+/ },
-      { id: "message", regex: /.+/ }
-    ];
-
-    fields.forEach(field => {
-      const input = document.getElementById(field.id);
-      const errorEl = document.getElementById(`${field.id}-error`);
-      if (!field.regex.test(input.value.trim())) {
-        errorEl.style.display = "block";
-        isValid = false;
+  // Watch date input
+  if (dateInput) {
+    dateInput.addEventListener("change", () => {
+      const selectedDate = dateInput.value;
+      if (selectedDate) {
+        loadAvailableSlots(selectedDate);
       } else {
-        errorEl.style.display = "none";
+        console.warn("Date input cleared, resetting slots");
+        timeSelect.innerHTML = '<option value="">Select a time</option>';
       }
     });
-
-    if (!consentCheckbox.checked) {
-      document.getElementById("consent-error").style.display = "block";
-      isValid = false;
-    } else {
-      document.getElementById("consent-error").style.display = "none";
-    }
-
-    return isValid;
   }
 
-  // --- Submit handler ---
-  if (contactForm) {
-    contactForm.addEventListener("submit", async (e) => {
+  // Form submit handler
+  if (form) {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      document.querySelectorAll(".error").forEach(el => el.style.display = "none");
 
-      if (!validateForm()) return;
-
-      const formData = new FormData(contactForm);
+      const formData = new FormData(form);
 
       try {
-        const res = await fetch(contactForm.action, {
+        const res = await fetch(form.action, {
           method: "POST",
-          body: formData
+          body: formData,
         });
+
+        if (!res.ok) {
+          console.error("Form submit HTTP error:", res.status, res.statusText);
+          alert("Server error. Try again later.");
+          return;
+        }
+
         const data = await res.json();
+        console.log("Form submit response:", data);
 
         if (data.success) {
           alert(`Booking successful! Your Booking ID: ${data.booking_id}`);
-          contactForm.reset();
+          form.reset();
           timeSelect.innerHTML = '<option value="">Select a time</option>';
         } else {
-          alert("Error: " + (data.errors ? data.errors.join(", ") : "Unknown error"));
+          if (data.errors) {
+            data.errors.forEach(err => {
+              if (err.includes("name")) document.getElementById("name-error").style.display = "block";
+              if (err.includes("email")) document.getElementById("email-error").style.display = "block";
+              if (err.includes("date")) document.getElementById("date-error").style.display = "block";
+              if (err.includes("time")) document.getElementById("time-error").style.display = "block";
+              if (err.includes("message")) document.getElementById("message-error").style.display = "block";
+              if (err.includes("consent")) document.getElementById("consent-error").style.display = "block";
+            });
+          } else {
+            alert("Something went wrong. Please try again.");
+          }
         }
       } catch (err) {
         console.error("Submission error:", err);
@@ -144,6 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
 
 
   // --- Scroll animations ---
