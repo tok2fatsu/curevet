@@ -69,9 +69,15 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadAvailableSlots(date) {
     timeSelect.innerHTML = '<option value="">Loading...</option>';
     try {
-      const res = await fetch(
-        `/backend/api/contacts.php?action=availableSlots&date=${encodeURIComponent(date)}`
-      );
+      const res = await fetch('/backend/api/contacts.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            action: 'availableSlots',
+            date: selectedDate
+          })
+      });
+
       const data = await res.json();
 
       timeSelect.innerHTML = '<option value="">Select a time</option>';
