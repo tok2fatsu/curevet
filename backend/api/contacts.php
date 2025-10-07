@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_GET['action'] === 'availableSlots'
     }
 
     // TODO: Pull available slots from your DB or static schedule
-    //$slots = ['09:00 AM', '10:30 AM', '12:00 PM', '02:00 PM', '03:30 PM'];
+    $slots = ['09:00 AM', '10:30 AM', '12:00 PM', '02:00 PM', '03:30 PM'];
 
     header('Content-Type: application/json');
     echo json_encode(['slots' => $slots]);
