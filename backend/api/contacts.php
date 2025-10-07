@@ -1,7 +1,7 @@
 <?php
 /**
- * contacts.php — secure contact form handler
- * Production-safe version
+ * contacts.php — secure contact form handler (production-safe)
+ * Uses PHP mail() instead of SMTP
  */
 
 header('Content-Type: application/json');
@@ -45,12 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // -----------------------------------------------------------------------------
 $name    = trim($_POST['name'] ?? '');
 $email   = trim($_POST['email'] ?? '');
-$subject = trim($_POST['subject'] ?? '');
-$message = trim($_POST['message'] ?? '');
 $phone   = trim($_POST['phone'] ?? '');
+$service = trim($_POST['service'] ?? '');
+$date    = trim($_POST['booking_date'] ?? '');
+$time    = trim($_POST['booking_time'] ?? '');
+$message = trim($_POST['message'] ?? '');
 
-if ($name === '' || $email === '' || $message === '') {
-    respond(false, 'Name, email, and message are required fields.', 400);
+if ($name === '' || $email === '' || $service === '' || $date === '' || $time === '') {
+    respond(false, 'Please fill all required fields.', 400);
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     respond(false, 'Invalid email format.', 400);
@@ -67,12 +69,8 @@ if ($redis) {
     try {
         $key = "contact_limit:" . sha1($ip);
         $count = $redis->incr($key);
-        if ($count === 1) {
-            $redis->expire($key, 60); // 1 minute
-        }
-        if ($count > 5) {
-            respond(false, 'Too many submissions. Please wait a minute and try again.', 429);
-        }
+        if ($count === 1) $redis->expire($key, 60);
+        if ($count > 5) respond(false, 'Too many submissions. Please wait a minute.', 429);
     } catch (Exception $e) {
         error_log('Redis rate-limit failed: ' . $e->getMessage());
     }
@@ -87,25 +85,87 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     ]);
 
+// --- Check for existing booking on same date/time/service ---
+
+    $checkStmt = $pdo->prepare("
+        SELECT id FROM contact_form
+        WHERE service = :service AND booking_date = :booking_date AND booking_time = :booking_time
+        LIMIT 1
+    ");
+    $checkStmt->execute([
+        ':service' => $service,
+        ':booking_date' => $date,
+        ':booking_time' => $time
+    ]);
+    if ($checkStmt->fetch()) {
+        respond(false, "That time slot for $service on $date at $time is already booked. Please choose another.", 409);
+    }
+
+// --- Insert new booking ---
+
     $stmt = $pdo->prepare("
-        INSERT INTO curevedd_bookings (name, email, phone, subject, message, created_at)
-        VALUES (:name, :email, :phone, :subject, :message, NOW())
+        INSERT INTO contact_form (name, email, phone, service, booking_date, booking_time, message, created_at)
+        VALUES (:name, :email, :phone, :service, :booking_date, :booking_time, :message, NOW())
     ");
     $stmt->execute([
-        ':name'    => $name,
-        ':email'   => $email,
-        ':phone'   => $phone,
-        ':subject' => $subject,
-        ':message' => $message,
+        ':name'         => $name,
+        ':email'        => $email,
+        ':phone'        => $phone,
+        ':service'      => $service,
+        ':booking_date' => $date,
+        ':booking_time' => $time,
+        ':message'      => $message,
     ]);
+    $booking_id = $pdo->lastInsertId();
 
 } catch (PDOException $e) {
     error_log('Database error: ' . $e->getMessage());
-    respond(false, 'Failed to save your message. Please try again later.', 500);
+    respond(false, 'Could not save your booking. Please try again later.', 500);
 }
 
 // -----------------------------------------------------------------------------
-// 8. Optional caching (for analytics or logs)
+// 8. Send emails via PHP mail()
+// -----------------------------------------------------------------------------
+$admin_to = "bookings@curevet.org";
+$admin_subject = "New Booking Request - CureVet";
+$admin_body = "New appointment booked:\n\n".
+              "Booking ID: $booking_id\n".
+              "Name: $name\n".
+              "Email: $email\n".
+              "Phone: $phone\n".
+              "Service: $service\n".
+              "Date: $date $time\n".
+              "Message: $message\n\n".
+              "-- CureVet System";
+
+$admin_headers = "From: bookings@curevet.org\r\n";
+$admin_headers .= "Reply-To: $email\r\n";
+$admin_headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+if (!@mail($admin_to, $admin_subject, $admin_body, $admin_headers)) {
+    error_log("Admin email failed for booking #$booking_id ($email)");
+}
+
+// --- Receipt to user ---
+$user_subject = "Your Booking Confirmation - CureVet";
+$user_body = "Dear $name,\n\n".
+             "Thank you for booking with CureVet. Here are your details:\n\n".
+             "Booking ID: $booking_id\n".
+             "Service: $service\n".
+             "Date: $date at $time\n\n".
+             "We look forward to seeing you!\n\n".
+             "— CureVet Team";
+
+$user_headers = "From: bookings@curevet.org\r\n";
+$user_headers .= "Reply-To: bookings@curevet.org\r\n";
+$user_headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+if (!@mail($email, $user_subject, $user_body, $user_headers)) {
+    error_log("User confirmation email failed for booking #$booking_id ($email)");
+}
+
+// -----------------------------------------------------------------------------
+// 9. Optional cache/log
 // -----------------------------------------------------------------------------
 if ($redis) {
     try {
@@ -113,40 +173,16 @@ if ($redis) {
             'ip'       => $ip,
             'name'     => $name,
             'email'    => $email,
-            'subject'  => $subject,
+            'service'  => $service,
             'datetime' => date('Y-m-d H:i:s'),
         ]));
     } catch (Exception $e) {
-        error_log('Redis cache logging failed: ' . $e->getMessage());
+        error_log('Redis logging failed: ' . $e->getMessage());
     }
 }
 
 // -----------------------------------------------------------------------------
-// 9. Send confirmation or notification email (optional)
+// 10. Response
 // -----------------------------------------------------------------------------
-// You can integrate PHPMailer or SMTP here securely
-// if you already have `$config['smtp_*']` defined.
-
-$user_email = $_POST['email'];
-    $receipt_subject = "Your Booking with CureVet - Confirmation";
-    $receipt_body = "Dear {$_POST['name']},\n\n".
-                    "Thank you for booking with CureVet. Here are your appointment details:\n\n".
-                    "Booking ID: $booking_id\n".
-                    "Service: {$_POST['service']}\n".
-                    "Date: {$_POST['booking_date']} at {$_POST['booking_time']}\n\n".
-                    "We look forward to seeing you and your pet.\n\n".
-                    "— CureVet Team";
-    $receipt_headers = "From: bookings@curevet.org\r\nReply-To: bookings@curevet.org";
-    @mail($user_email, $receipt_subject, $receipt_body, $receipt_headers);
-
-    echo json_encode(['success' => true, 'booking_id' => $booking_id]);
-
-} catch (Exception $e) {
-    echo json_encode(['success' => false, 'errors' => [$e->getMessage()]]);
-}
-
-// -----------------------------------------------------------------------------
-// 10. Success response
-// -----------------------------------------------------------------------------
-respond(true, 'Your message has been sent successfully!');
+respond(true, 'Your booking has been successfully submitted!');
 
