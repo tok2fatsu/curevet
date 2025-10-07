@@ -152,7 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
               if (err.includes("date")) document.getElementById("date-error").style.display = "block";
               if (err.includes("time")) document.getElementById("time-error").style.display = "block";
               if (err.includes("message")) document.getElementById("message-error").style.display = "block";
-              if (err.includes("consent")) document.getElementById("consent-error").style.display = "block";
             });
           }
           showAlert("Please correct the highlighted errors and try again.");
