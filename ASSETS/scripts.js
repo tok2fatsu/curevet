@@ -40,7 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("contactForm");
   const dateInput = document.getElementById("booking_date");
   const timeSelect = document.getElementById("booking_time");
-
+  const alertBox = document.getElementById('formAlert');
+  
   // Inline feedback element
   const feedbackBox = document.createElement("div");
   feedbackBox.id = "form-feedback";
@@ -63,6 +64,17 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       feedbackBox.style.display = "none";
     }, 5000);
+  }
+
+  function showAlert(message, type = 'error') {
+    alertBox.style.display = 'block';
+    alertBox.textContent = message;
+    alertBox.className = 'alert ' + type;
+  }
+
+  function clearAlert() {
+    alertBox.style.display = 'none';
+    alertBox.textContent = '';
   }
 
   // Load available time slots for a given date
